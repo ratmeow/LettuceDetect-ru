@@ -37,6 +37,8 @@ from peft import LoraConfig, TaskType, get_peft_model
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
 
+from lettucedetect.utils.device import get_default_device
+
 SYSTEM_PROMPT = (
     "You are a code hallucination detector. Given source code context and a code answer, "
     "identify any hallucinated spans — code that is factually wrong, uses non-existent APIs, "
@@ -254,7 +256,7 @@ def main():
     model = get_peft_model(model, lora_config)
     model.print_trainable_parameters()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = get_default_device()
     model = model.to(device)
 
     # Build datasets

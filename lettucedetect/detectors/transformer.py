@@ -10,6 +10,7 @@ from transformers import AutoModelForTokenClassification, AutoTokenizer
 from lettucedetect.datasets.hallucination_dataset import HallucinationDataset
 from lettucedetect.detectors.base import BaseDetector
 from lettucedetect.detectors.prompt_utils import LANG_TO_PASSAGE, Lang, PromptUtils
+from lettucedetect.utils.device import get_default_device
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +47,7 @@ class TransformerDetector(BaseDetector):
         self.lang, self.max_length = lang, max_length
         self.tokenizer = AutoTokenizer.from_pretrained(model_path, **tok_kwargs)
         self.model = AutoModelForTokenClassification.from_pretrained(model_path, **tok_kwargs)
-        self.device = device or (
-            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        )
+        self.device = device or get_default_device()
         self.model.to(self.device).eval()
 
     # ------------------------------------------------------------------

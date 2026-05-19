@@ -68,6 +68,24 @@ def parse_args():
     parser.add_argument(
         "--learning-rate", type=float, default=1e-5, help="Learning rate for training"
     )
+    parser.add_argument(
+        "--max-length",
+        type=int,
+        default=4096,
+        help="Maximum tokenized sequence length. Lower this to reduce GPU/MPS memory use.",
+    )
+    parser.add_argument(
+        "--gradient-accumulation-steps",
+        type=int,
+        default=1,
+        help="Accumulate gradients across this many micro-batches before optimizer step.",
+    )
+    parser.add_argument(
+        "--empty-cache-steps",
+        type=int,
+        default=0,
+        help="On MPS, clear accelerator cache every N optimizer steps. Disabled at 0.",
+    )
     return parser.parse_args()
 
 
@@ -118,8 +136,8 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer, label_pad_token_id=-100)
 
-    train_dataset = HallucinationDataset(train_samples, tokenizer)
-    dev_dataset = HallucinationDataset(dev_samples, tokenizer)
+    train_dataset = HallucinationDataset(train_samples, tokenizer, max_length=args.max_length)
+    dev_dataset = HallucinationDataset(dev_samples, tokenizer, max_length=args.max_length)
 
     train_loader = DataLoader(
         train_dataset,
@@ -146,6 +164,8 @@ def main():
         epochs=args.epochs,
         learning_rate=args.learning_rate,
         save_path=args.output_dir,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        empty_cache_steps=args.empty_cache_steps,
     )
 
     trainer.train()

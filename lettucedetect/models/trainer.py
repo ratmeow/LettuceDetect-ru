@@ -9,6 +9,7 @@ from tqdm.auto import tqdm
 from transformers import PreTrainedTokenizer
 
 from lettucedetect.models.evaluator import evaluate_model, print_metrics
+from lettucedetect.utils.device import get_default_device
 
 
 class Trainer:
@@ -46,7 +47,7 @@ class Trainer:
         self.test_loader = test_loader
         self.epochs = epochs
         self.learning_rate = learning_rate
-        self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device or get_default_device()
         self.save_path = save_path
 
         self.optimizer: Optimizer = torch.optim.AdamW(

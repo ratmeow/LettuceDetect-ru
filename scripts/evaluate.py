@@ -21,6 +21,7 @@ from lettucedetect.models.evaluator import (
     print_metrics,
 )
 from lettucedetect.models.inference import HallucinationDetector
+from lettucedetect.utils.device import get_default_device
 
 
 def evaluate_task_samples(
@@ -31,12 +32,13 @@ def evaluate_task_samples(
     detector=None,
     device=None,
     batch_size=8,
+    max_length=4096,
 ):
     print(f"\nEvaluating model on {len(samples)} samples")
 
     if evaluation_type in {"token_level", "example_level"}:
         # Prepare the dataset and dataloader
-        test_dataset = HallucinationDataset(samples, tokenizer)
+        test_dataset = HallucinationDataset(samples, tokenizer, max_length=max_length)
         data_collator = DataCollatorForTokenClassification(
             tokenizer=tokenizer, label_pad_token_id=-100
         )
@@ -103,6 +105,18 @@ def main():
         default=8,
         help="Batch size for evaluation",
     )
+    parser.add_argument(
+        "--lang",
+        type=str,
+        default="en",
+        help="Language code used for detector-based char_level evaluation",
+    )
+    parser.add_argument(
+        "--max-length",
+        type=int,
+        default=4096,
+        help="Maximum tokenized sequence length. Use the same value used for training.",
+    )
 
     args = parser.parse_args()
 
@@ -112,7 +126,7 @@ def main():
 
     # Setup model/detector based on evaluation type
     if args.evaluation_type in {"token_level", "example_level"}:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = get_default_device()
         model = AutoModelForTokenClassification.from_pretrained(
             args.model_path, trust_remote_code=True
         ).to(device)
@@ -120,7 +134,12 @@ def main():
         detector = None
     else:  # char_level
         model, tokenizer, device = None, None, None
-        detector = HallucinationDetector(method="transformer", model_path=args.model_path)
+        detector = HallucinationDetector(
+            method="transformer",
+            model_path=args.model_path,
+            lang=args.lang,
+            max_length=args.max_length,
+        )
 
     # Evaluate each task type separately
     for task_type, samples in task_type_map.items():
@@ -133,6 +152,7 @@ def main():
             detector=detector,
             device=device,
             batch_size=args.batch_size,
+            max_length=args.max_length,
         )
 
     # Evaluate the whole dataset
@@ -145,6 +165,7 @@ def main():
         detector=detector,
         device=device,
         batch_size=args.batch_size,
+        max_length=args.max_length,
     )
 
 

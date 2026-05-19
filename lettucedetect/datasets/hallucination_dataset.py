@@ -28,7 +28,7 @@ class HallucinationSample:
     split: Literal["train", "dev", "test"]
     task_type: str
     dataset: Literal["ragtruth", "ragbench", "swebench_code"]
-    language: Literal["en", "de", "fr", "es", "it", "pl", "cn", "hu"]
+    language: Literal["en", "de", "fr", "es", "it", "pl", "cn", "hu", "ru"]
 
     def to_json(self) -> dict:
         """Serialize to a JSON-compatible dict."""
